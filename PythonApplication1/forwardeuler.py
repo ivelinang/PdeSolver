@@ -56,7 +56,9 @@ class ForwardEuler(HeatPDESolver):
 
 
 
-            0 dt 2*dt 3*dt ....... t (today) ................................T
+            
+                     lower boundary -> for call V = 0
+         0 dt 2*dt 3*dt ....... t (today) ................................T
          _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
        0 |                          |                                          | 
       dS |                          |                                          |
@@ -67,7 +69,7 @@ class ForwardEuler(HeatPDESolver):
          |                                                                     |
        . |                                                                     |
    Smax  |---------------------------------------------------------------------
-                    uppper boundary for S
+                    uppper boundary -> for call V = S - Ke^(-r(T-t))
 
     The first column:
     for i in range(0, Smax):
@@ -112,7 +114,7 @@ class ForwardEuler(HeatPDESolver):
 
 
         
-def solve_pde(s, k, vol, t, r, alpha, time_intervals):
+def solve_pde_fe(s, k, vol, t, r, alpha, time_intervals):
 
     tau_final = t*vol*vol/2.0
     d_tau = tau_final/time_intervals

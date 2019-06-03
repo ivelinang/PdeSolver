@@ -144,7 +144,7 @@ class Test_PdeSolver(unittest.TestCase):
         solver = make_euro_call_fe(s, k, vol, t, r, q)
 
         price_1 = solver.compute_price_alpha(0.1, 50)        
-        price_3 = solve_pde(s, k, vol, t, r, 0.1, 50)
+        price_3 = solve_pde_fe(s, k, vol, t, r, 0.1, 50)
 
         price_bs = BS_premium(s,k,t,r,vol)
 
@@ -169,7 +169,8 @@ class Test_PdeSolver(unittest.TestCase):
 
         price_1 = solver.compute_price_alpha(0.1, 50)  
         price_2 = solve_pde_be(s, k, vol, t, r, 0.1, 50)
-        price_3 = solve_pde(s, k, vol, t, r, 0.1, 50)
+        price_3 = solve_pde_fe(s, k, vol, t, r, 0.1, 50)
+        #price_4 = solve_pde_cn(s, k, vol, t, r, 0.1, 50)
 
         price_bs = BS_premium(s,k,t,r,vol)
 
@@ -178,7 +179,37 @@ class Test_PdeSolver(unittest.TestCase):
         self.assertAlmostEquals(price_3, price_bs, delta=0.01*price_bs)  
         self.assertAlmostEquals(price_2, price_bs, delta=0.01*price_bs)                
         self.assertAlmostEquals(price_1, price_bs, delta=0.01*price_bs)
+        #self.assertAlmostEquals(price_4, price_bs, delta=0.01*price_bs)
+        #self.assertAlmostEquals(price_1, price_4, delta=0.01*price_4)
         self.assertAlmostEquals(price_1, price_2, delta=0.001*price_2)
+
+
+    def test_call_cn_european(self):
+
+        s = 41.0
+        k = 40.0
+        vol = 0.35
+        t = 0.75
+        r = 0.04
+        q = 0.0
+
+        solver = make_euro_call_cn_lu(s, k, vol, t, r, q)
+
+        price_1 = solver.compute_price_alpha(0.1, 50)  
+        price_2 = solve_pde_be(s, k, vol, t, r, 0.1, 50)
+        price_3 = solve_pde_fe(s, k, vol, t, r, 0.1, 50)
+        price_4 = solve_pde_cn(s, k, vol, t, r, 0.1, 50)
+
+        price_bs = BS_premium(s,k,t,r,vol)
+
+        bool = np.isclose(price_1, price_bs, rtol= 0.0001)
+
+        self.assertAlmostEquals(price_3, price_bs, delta=0.001*price_bs)  
+        self.assertAlmostEquals(price_2, price_bs, delta=0.01*price_bs)                
+        self.assertAlmostEquals(price_1, price_bs, delta=0.01*price_bs)
+        self.assertAlmostEquals(price_4, price_bs, delta=0.01*price_bs)
+        self.assertAlmostEquals(price_1, price_4, delta=0.001*price_4)
+        self.assertAlmostEquals(price_1, price_2, delta=0.01*price_2)
         
 
 if __name__ == '__main__':

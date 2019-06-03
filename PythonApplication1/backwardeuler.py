@@ -14,9 +14,33 @@ class BackwardEuler(HeatPDESolver):
 
     this becomes:
     u(t-dt, x) =  -k^2*dt/(dx^2) * u(t, x-dx)  +  [ 1 + 2*k^2*dt/(dx^2) ]*u(t, x)  -  k^2*dt/(dx^2)*u(t, x+dx) 
+    ....
+    u(t-dt, x) =  -alpha * u(t, x-dx)  +  [ 1 + 2*alpha ]*u(t, x)  -  alpha*u(t, x+dx) 
+    u(t-dt, x+dx) =  -alpha * u(t, x)  +  [ 1 + 2*alpha ]*u(t, x+dx)  -  alpha*u(t, x+2*dx) 
+    u(t-dt, x+2*dx) =  -alpha * u(t, x+dx)  +  [ 1 + 2*alpha ]*u(t, x+d2*x)  -  alpha*u(t, x+3*dx) 
+    .....
+
+    This can be solved via matrices
+    A = |1+2*alpha    -alpha        0  ...... 0 |
+        |-alpha      1+2*alpha    -alpha .....0 |  
+        | 0           -alpha    1+2*alpha       |
+        |                                       |
+        |                                       |
+        |                                       |
+        |                                       |
+        |0                                    0 |
+
+
+
 
     This can be written in matrix form:
-    A u(t) = u(t-dt) + c(t)
+    A u(t) = u(t-dt) + b(t)
+
+    b(t) = | a* u(x_left, t) |
+           |     0           |
+           |                 |
+           |     0           |
+           | a* u(x_right, t)|
 
     factoring the matrix A is more time-efficient than inverting it, 
     and solving the system of equations using the factorization is no more expensive 
@@ -58,9 +82,9 @@ class BackwardEuler(HeatPDESolver):
 
         for row in range(1, m+1):
             for i in range(1, n):
-                b[i-1] = u[row-1, i]
-            b[0] = b[0] + alpha*u[row,0]
-            b[n-2] = b[n-2] + alpha*u[row,n]
+                b[i-1] = u[row-1, i] # u(t-dt) + b(t) =  u(t-dt) + 0  for rows between first and last
+            b[0] = b[0] + alpha*u[row,0] # for first row: u(t-dt) + b(t) =  u(t-dt) + alpha*u(row, 0)     ..... {a* u(x_left, t)}
+            b[n-2] = b[n-2] + alpha*u[row,n] #for last row: u(t-dt) + b(t) =  u(t-dt) + alpha*u(row, n)   ..... {a* u(x_right, t)}
 
             u_next = self.solver.solve(A, b)
 
@@ -106,7 +130,7 @@ def solve_pde_be(s, k, vol, t, r, alpha, time_intervals):
     n = N
     m = M
     #set up matrix A
-    A = np.zeros((n-1, n-1))
+    A = np.zeros((n-1, n-1))    
     for row in range(n-1):
         A[row, row] = 1 + 2*alpha
     for row in range(n-2):
@@ -121,6 +145,7 @@ def solve_pde_be(s, k, vol, t, r, alpha, time_intervals):
     for row in range(1, m+1):
         for i in range(1, n):
             bv[i-1] = u[i, row-1]
+        
         bv[0] = bv[0] + alpha*u[0,row]
         bv[n-2] = bv[n-2] + alpha*u[n,row]
 
