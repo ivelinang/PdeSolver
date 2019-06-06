@@ -5,6 +5,7 @@ from linearsolve import *
 from pdesolverfactory import *
 from blackscholes import *
 from forwardeuler import *
+from pde.pde import *
 
 import scipy as sc
 import scipy.linalg as la
@@ -210,6 +211,23 @@ class Test_PdeSolver(unittest.TestCase):
         self.assertAlmostEquals(price_4, price_bs, delta=0.01*price_bs)
         self.assertAlmostEquals(price_1, price_4, delta=0.001*price_4)
         self.assertAlmostEquals(price_1, price_2, delta=0.01*price_2)
+
+
+    def test_call_fe_european_B(self):
+
+        s = 41.0
+        k = 40.0
+        vol = 0.35
+        t = 0.75
+        r = 0.04
+        q = 0.0       
+
+        price_1 = solve_pde_fe_call(s,k,vol, t,r, 20, 50)         
+
+        price_bs = BS_premium(s,k,t,r,vol)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+        
         
 
 if __name__ == '__main__':
