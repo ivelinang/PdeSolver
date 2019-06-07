@@ -222,9 +222,31 @@ class Test_PdeSolver(unittest.TestCase):
         r = 0.04
         q = 0.0       
 
-        price_1 = solve_pde_fe_call(s,k,vol, t,r, 20, 50)         
+        price_1 = solve_pde_fe_generic(s,k,vol, t,r, 250, 230) 
+        price_2 = solve_pde_be(s, k, vol, t, r, 0.1, 230)
+        price_3 = solve_pde_fe(s, k, vol, t, r, 0.1, 230)
+        price_4 = solve_pde_cn(s, k, vol, t, r, 0.1, 230)
 
         price_bs = BS_premium(s,k,t,r,vol)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+        self.assertAlmostEquals(price_2, price_bs, delta=0.000001*price_bs)
+        self.assertAlmostEquals(price_3, price_bs, delta=0.000001*price_bs)
+        self.assertAlmostEquals(price_4, price_bs, delta=0.000001*price_bs)
+
+
+    def test_put_fe_european_B(self):
+
+        s = 138.50
+        k = 110
+        vol = 0.16
+        t = 0.632876712
+        r = 0.01
+        q = 0.0       
+
+        price_1 = solve_pde_fe_generic(s,k,vol, t,r, 250, 230, False)         
+
+        price_bs = BS_premium(s,k,t,r,vol, False)  
         
         self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
         

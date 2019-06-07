@@ -149,7 +149,8 @@ def solve_pde_be(s, k, vol, t, r, alpha, time_intervals):
         bv[0] = bv[0] + alpha*u[0,row]
         bv[n-2] = bv[n-2] + alpha*u[n,row]
 
-        u_next = LuNoPivSolve.solve(A, bv)
+        #u_next = LuNoPivSolve.solve(A, bv)
+        u_next = np.linalg.solve(A, bv)
 
         for j in range(1, n):
             u[j, row] = u_next[j-1]

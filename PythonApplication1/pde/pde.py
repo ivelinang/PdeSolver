@@ -3,7 +3,7 @@ import numpy as np
 from linearsolve import *
 
 
-def solve_pde_fe_call(s, k, vol, t, r, spot_intervals, time_intervals):
+def solve_pde_fe_generic(s, k, vol, t, r, spot_intervals, time_intervals, call=True):
 
 
     #time intervals
@@ -11,23 +11,32 @@ def solve_pde_fe_call(s, k, vol, t, r, spot_intervals, time_intervals):
     d_tau = tau_final/time_intervals
 
     S_min = 0
-    S_max = s*np.exp(r*t) + 4*np.sqrt(s*s*np.exp(2*r*t)*(np.exp(vol*vol*t)-1)) # mean + 4 s.d.
+    S_max = 250 #s*np.exp(r*t) + 4*np.sqrt(s*s*np.exp(2*r*t)*(np.exp(vol*vol*t)-1)) # mean + 4 s.d.
     d_x = (S_max - S_min)/spot_intervals
 
     M = spot_intervals
     N = time_intervals
     u = np.zeros((M+1, N+1)) # 0->M , 0->N
 
+    if call:
+        left_boundary =lambda S,T,K,R: 0
+        right_boundary = lambda S,T,K,R: S - K*np.exp(-R*T)
+        side_boundary = lambda S,K : max(S-K, 0)
+    else:
+        left_boundary =lambda S,T,K,R,: K*np.exp(-R*T)
+        right_boundary = lambda S,T,K,R: 0
+        side_boundary = lambda S,K : max(K-S, 0)
+
     #initial boundary conditions
     for i in range(N+1):        
         tau_i = i*d_tau
-        u[0,i] = 0 #left boundary
-        u[M, i] = S_max - k*np.exp(-r*tau_i)   #right boundary S - Ke^(-r(T-t))
+        u[0,i] = left_boundary(0, tau_i, k, r)#k*np.exp(-r*tau_i) #left boundary
+        u[M, i] = right_boundary(0, tau_i, k, r) #0 #S_max - k*np.exp(-r*tau_i)   #right boundary S - Ke^(-r(T-t))
 
     #side boundary conditions
     for j in range(M+1):
         x_i = S_min +j*d_x
-        u[j,N] = max(x_i - k, 0)
+        u[j,N] = side_boundary(x_i, k)#max(k - x_i, 0)        #max(x_i - k, 0)
 
 
     alpha = lambda j: 0.5*d_tau*(r*j-vol*vol*j*j)
@@ -65,7 +74,8 @@ def solve_pde_fe_call(s, k, vol, t, r, spot_intervals, time_intervals):
         C[-1] = gamma(M) * u[-1, i]
         P_i1 = u[1:M, i+1]
         P_C = P_i1 - C
-        u_next = LuNoPivSolve.solve(A, P_C)
+        #u_next = LuNoPivSolve.solve(A, P_C)
+        u_next = np.linalg.solve(A, P_C)
         u[1:M, i] = u_next
 
 

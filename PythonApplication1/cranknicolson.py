@@ -199,7 +199,8 @@ def solve_pde_cn(s, k, vol, t, r, alpha, time_intervals):
         bv[0] +=  0.5*alpha*(u[0,row] + u[0, row-1])
         bv[n-2] +=  0.5* alpha*(u[n,row] + u[n, row-1])
 
-        u_next = LuNoPivSolve.solve(A, bv)
+        #u_next = LuNoPivSolve.solve(A, bv)
+        u_next = np.linalg.solve(A, bv)
 
         for j in range(1, n):
             u[j, row] = u_next[j-1]
