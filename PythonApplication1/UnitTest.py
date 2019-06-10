@@ -244,7 +244,7 @@ class Test_PdeSolver(unittest.TestCase):
         r = 0.01
         q = 0.0       
 
-        price_1 = solve_pde_fe_generic(s,k,vol, t,r, 250, 230, False)         
+        price_1 = solve_pde_fe_generic(s,k,vol, t,r, 250, 2310, False, S_max=250)         
 
         price_bs = BS_premium(s,k,t,r,vol, False)  
         
@@ -259,7 +259,7 @@ class Test_PdeSolver(unittest.TestCase):
         r = 0.01
         q = 0.0       
 
-        price_1 = solve_pde_be_generic(s,k,vol, t,r, 100, 230, False)         
+        price_1 = solve_pde_be_generic(s,k,vol, t,r, 100, 230, False, S_max=250)         
 
         price_bs = BS_premium(s,k,t,r,vol, False)  
         
@@ -295,6 +295,53 @@ class Test_PdeSolver(unittest.TestCase):
         price_bs = BS_premium(s,k,t,r,vol)  
         
         self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+
+
+    def test_call_cn_european_A(self):
+
+        s = 41.0
+        k = 40.0
+        vol = 0.35
+        t = 0.75
+        r = 0.04     
+
+        price_1 = solve_pde_cn_generic(s,k,vol, t,r, 250, 230)         
+
+        price_bs = BS_premium(s,k,t,r,vol)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+
+    def test_call_cn_european_B(self):
+
+        s = 138.50
+        k = 110
+        vol = 0.16
+        t = 0.632876712
+        r = 0.01
+        q = 0.0       
+
+        price_1 = solve_pde_cn_generic(s,k,vol, t,r, 250, 230)         
+
+        price_bs = BS_premium(s,k,t,r,vol)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+
+
+    def test_put_cn_european_A(self):
+
+        s = 138.50
+        k = 110
+        vol = 0.16
+        t = 0.632876712
+        r = 0.01
+        q = 0.0       
+
+        price_1 = solve_pde_cn_generic(s,k,vol, t,r, 250, 2310, False, S_max=250)         
+
+        price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+        
         
         
 
