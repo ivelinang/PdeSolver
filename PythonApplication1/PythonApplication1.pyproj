@@ -21,10 +21,49 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="backwardeuler.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="blackscholes.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="bspdesolver.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="cranknicolson.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="decomposer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="forwardeuler.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="linearsolve.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PDEsolver.py" />
+    <Compile Include="pdesolverfactory.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pde\payoff.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pde\pde.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pde\vanillaoption.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pde\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="UnitTest.py">
       <SubType>Code</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="pde\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

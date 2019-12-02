@@ -38,8 +38,8 @@ def solve_pde_fe_generic(s, k, vol, t, r, spot_intervals, time_intervals, call=T
     #initial boundary conditions
     for i in range(N+1):        
         tau_i = i*d_tau
-        u[0,i] = left_boundary(0, tau_i, k, r)#k*np.exp(-r*tau_i) #left boundary
-        u[M, i] = right_boundary(0, tau_i, k, r) #0 #S_max - k*np.exp(-r*tau_i)   #right boundary S - Ke^(-r(T-t))
+        u[0,i] = left_boundary(S_min, tau_i, k, r)#k*np.exp(-r*tau_i) #left boundary
+        u[M, i] = right_boundary(S_max, tau_i, k, r) #0 #S_max - k*np.exp(-r*tau_i)   #right boundary S - Ke^(-r(T-t))
 
     #side boundary conditions
     for j in range(M+1):
@@ -200,8 +200,8 @@ def solve_pde_cn_generic(s, k, vol, t, r, spot_intervals, time_intervals, call=T
     #initial boundary conditions
     for i in range(N+1):        
         tau_i = i*d_tau
-        u[0,i] = left_boundary(0, tau_i, k, r)#k*np.exp(-r*tau_i) #left boundary
-        u[M, i] = right_boundary(0, tau_i, k, r) #0 #S_max - k*np.exp(-r*tau_i)   #right boundary S - Ke^(-r(T-t))
+        u[0,i] = left_boundary(S_min, tau_i, k, r)#k*np.exp(-r*tau_i) #left boundary
+        u[M, i] = right_boundary(S_max, tau_i, k, r) #0 #S_max - k*np.exp(-r*tau_i)   #right boundary S - Ke^(-r(T-t))
 
     #side boundary conditions
     for j in range(M+1):
