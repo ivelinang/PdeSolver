@@ -250,6 +250,23 @@ class Test_PdeSolver(unittest.TestCase):
         
         self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
 
+    def test_put_fe_european_Alternative(self):
+
+        s = 138.50
+        k = 110
+        vol = 0.16
+        t = 0.632876712
+        r = 0.01
+        q = 0.0       
+
+        price_1 = solve_pde_fe_generic(s,k,vol, t,r, 250, 2310, False, S_max=250)      
+        price_2 = solve_pde_fe_better(s,k,vol, t,r, 250, 2310, False, S_max=250) 
+
+        price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        #self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+        self.assertAlmostEquals(price_1, price_2, delta=0.000001*price_1)
+
     def test_put_be_european_C(self):
 
         s = 138.50
