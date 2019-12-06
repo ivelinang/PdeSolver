@@ -52,6 +52,9 @@
     <Compile Include="pde\pde.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="pde\sabr_pde.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="pde\vanillaoption.py">
       <SubType>Code</SubType>
     </Compile>
