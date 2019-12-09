@@ -154,7 +154,7 @@ def solve_sabr_pde_fe_generic(f, k, alpha, beta, rho, nu, gamma, t, spot_interva
                 myOper_Y[x, y] =(c*v_y + d*v_yy)*dT
                 myOper_X[x, y] =(a*v_x + b*v_xx)*dT*0.5  #half_dt??
 
-                myRhs[x,y]  = v_00 + (a*v_x + b*v_xx)*dT + (c*v_y + d*v_yy)*dT + e*v_xy*dT
+                myRhs[x,y]  = v_00 + (a*v_x + b*v_xx)*dT*0.5 + (c*v_y + d*v_yy)*dT + e*v_xy*dT
 
         #now do triadag
 
@@ -213,6 +213,22 @@ def solve_sabr_pde_fe_generic(f, k, alpha, beta, rho, nu, gamma, t, spot_interva
             #now do the tridiag
             myLhs_X = Tridag().solve(myLower_X, myDiag_X, myUpper_X, myTemp_X, numXPoints)
 
+            #lets try with np.solve to improve speed
+            #set up matrix A
+            #A = np.zeros((numXPoints, numXPoints))
+            #for row in range(numXPoints):
+            #    A[row, row] = myDiag_X[row]
+            #for row in range(numXPoints-1):
+            #    A[row, row+1] =  myUpper_X[row] #gamma(row+1)
+            #for row in range(numXPoints-1):
+            #    A[row, row-1] = myLower_X[row]
+
+            #C = np.zeros(numXPoints)
+            #for row in range(numXPoints):
+            #    C[row] = myTemp_X[row]
+
+            #myLhs_X = np.linalg.solve(A, C)
+
             for x in range(numXPoints):
                 myV_star[x, y] = myLhs_X[x]
 
@@ -254,7 +270,21 @@ def solve_sabr_pde_fe_generic(f, k, alpha, beta, rho, nu, gamma, t, spot_interva
 
             myLhs_Y = Tridag().solve(myLower_Y, myDiag_Y, myUpper_Y, myTemp_Y, numYPoints)
 
-            for y in range(numYPoints_m1):
+            #A = np.zeros((numYPoints, numYPoints))
+            #for row in range(numYPoints):
+            #    A[row, row] = myDiag_Y[row]
+            #for row in range(numYPoints-1):
+            #    A[row, row+1] =  myUpper_Y[row] #gamma(row+1)
+            #for row in range(numYPoints-1):
+            #    A[row, row-1] = myLower_Y[row]
+
+            #C = np.zeros(numYPoints)
+            #for row in range(numYPoints):
+            #    C[row] = myTemp_Y[row]
+
+            #myLhs_Y = np.linalg.solve(A, C)
+
+            for y in range(1, numYPoints_m1):
                 myGrid[tx-1,x, y] = myLhs_Y[y]
     
     myXYValues = myGrid[0, :, :].T #reshape((numYPoints, numXPoints))
