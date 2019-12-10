@@ -375,12 +375,74 @@ class Test_PdeSolver(unittest.TestCase):
         
         #f, k, alpha, beta, rho, nu, gamma, t, spot_intervals, vol_intervals, time_intervals
 
-        price_1 = solve_sabr_pde_fe_generic(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
+        price_1 = solve_sabr_pde_fe_generic_log(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
         price_true = 0.53575928916254456
 
         #price_bs = BS_premium(s,k,t,r,vol, False)  
         
         self.assertAlmostEquals(price_1, price_true, delta=0.000001*price_1)  
+
+
+    def test_call_sabr_pde_european_B(self):
+
+        f = 1.0
+        k = 0.5
+        vol = 0.2658
+        nu = 0.2555
+        beta = 1.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        
+        #f, k, alpha, beta, rho, nu, gamma, t, spot_intervals, vol_intervals, time_intervals
+
+        price_1 = solve_sabr_pde_fe_generic(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_true, delta=0.1*price_1)  
+
+
+    def test_call_sabr_pde_european_C(self):
+
+        f = 1.0
+        k = 0.5
+        vol = 0.2658
+        nu = 0.2555
+        beta = 1.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        
+        #f, k, alpha, beta, rho, nu, gamma, t, spot_intervals, vol_intervals, time_intervals
+
+        price_1 = solve_sabr_pde_fe_mixed(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_true, delta=0.01*price_1)  
+
+    def test_call_sabr_pde_european_D(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 0.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        
+        #f, k, alpha, beta, rho, nu, gamma, t, spot_intervals, vol_intervals, time_intervals
+
+        price_1 = solve_sabr_pde_fe_generic(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_true, delta=0.01*price_1)  
         
         
 
