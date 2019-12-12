@@ -338,6 +338,8 @@ def solve_sabr_pde_fe_generic(f, k, alpha, beta, rho, nu, gamma, t, spot_interva
     #UpperYLimit = np.exp(UpperYLimit)
     LowerYLimit = vol0 - numYStdDevs * xi*np.sqrt(time);
     #LowerYLimit = np.exp(LowerYLimit)
+    #vol cant go down below zero
+    LowerYLimit = max(0, LowerYLimit)
 
     dT = time/(numTPoints-1)
     myTPoints = np.zeros(numTPoints)

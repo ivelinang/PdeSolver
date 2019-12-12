@@ -7,6 +7,7 @@ from blackscholes import *
 from forwardeuler import *
 from pde.pde import *
 from pde.sabr_pde import *
+from mc.sabr_mc import *
 
 import scipy as sc
 import scipy.linalg as la
@@ -443,6 +444,182 @@ class Test_PdeSolver(unittest.TestCase):
         #price_bs = BS_premium(s,k,t,r,vol, False)  
         
         self.assertAlmostEquals(price_1, price_true, delta=0.01*price_1)  
+
+
+    def test_call_sabr_pde_european_E(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 0.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        
+        #f, k, alpha, beta, rho, nu, gamma, t, spot_intervals, vol_intervals, time_intervals
+
+        price_1 = solve_sabr_pde_fe_generic_log(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_true, delta=0.01*price_1)  
+
+
+    def test_call_sabr_pde_european_F(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 0.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        
+        #f, k, alpha, beta, rho, nu, gamma, t, spot_intervals, vol_intervals, time_intervals
+
+        price_1 = solve_sabr_pde_fe_mixed(f,k,vol, beta, rho, nu, gamma, t, 400, 100, 100, True)     
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_true, delta=0.01*price_1)  
+
+
+class Test_SabrMC(unittest.TestCase):
+
+    def test_call_sabrMC_A(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 0.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        nSims =1000
+        deltaT = 1.0/252.0
+
+        sabr = SabrMonteCarlo(f, vol, beta, nu, rho, gamma, t)
+        price = sabr.priceOption(deltaT, nSims, k, 1.0)
+
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price, price_true, delta=0.01*price)  
+
+    def test_call_sabrMC_B(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 0.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        nSims =1000
+        deltaT = 1.0/252.0
+
+        sabr = SabrMonteCarlo(f, vol, beta, nu, rho, gamma, t)
+        price = sabr.priceOption_log(deltaT, nSims, k, 1.0)
+        #price is nan
+        #cant do log term with Monte Carlo and Beta=0
+        #this comes from the following
+        # forward[i] = f_prev*np.exp(sigma_prev*np.power(f_prev,(self.beta-1.0))*bm[i]*np.sqrt(deltaT) - 0.5*sigma_prev*sigma_prev*np.power(f_prev,(2.0*self.beta-2.0))*deltaT)
+        #so beta-1 = 0-1 = -1
+        #also 2.B-2 = -2
+        #when forward becomes zero, 0^-1 or 0^-2 is non defined, so you get nan
+
+        #so you should not simulate forward in log form when Beta=0
+
+        #similarly you should not simulate forward in log form when forward is negative... for obvious reasons
+     
+
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price, price_true, delta=0.01*price) 
+
+    def test_call_sabrMC_C(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 1.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        nSims =1000
+        deltaT = 1.0/252.0
+
+        sabr = SabrMonteCarlo(f, vol, beta, nu, rho, gamma, t)
+        price = sabr.priceOption_log(deltaT, nSims, k, 1.0)
+        #price is nan
+        #cant do log term with Monte Carlo and Beta=0
+
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price, price_true, delta=0.01*price) 
+
+
+    def test_call_sabrMC_D(self):
+
+        f = 0.05
+        k = 0.01
+        vol = 0.2658
+        nu = 0.2555
+        beta = 1.0
+        rho = -0.3305
+        t = 5.0
+        gamma = 1.0
+        nSims =1000
+        deltaT = 1.0/252.0
+
+        sabr = SabrMonteCarlo(f, vol, beta, nu, rho, gamma, t)
+        price = sabr.priceOption(deltaT, nSims, k, 1.0)
+        #price is nan
+        #cant do log term with Monte Carlo and Beta=0
+
+        price_true = 0.53575928916254456
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price, price_true, delta=0.01*price) 
+
+
+    def test_choleshy_A(self):
+
+        nSteps = 100
+        nAssets =2
+        rho = -0.3305
+        rhoMtrx = np.array([1.0, rho, rho, 1.0])
+        rhoMtrx.shape=(2,2)
+
+        X = np.random.normal(size=(nSteps, nAssets))
+
+        Y = X[:,0]*rho + np.sqrt(1.0-rho*rho)*X[:,1]
+        Z = np.stack((X[:,0], Y),axis=1)
+        #Y = np.dot(X,C)
+
+        C = sc.linalg.cholesky(rhoMtrx, lower=False) #this fails with negative correl! wth?
+        #C = np.linalg.cholesky(rhoMtrx)
+        D = np.dot(X,C)
+
+        self.assertTrue(np.prod(Z==D))
+       
+
+
+
+
         
         
 
