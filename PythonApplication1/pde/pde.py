@@ -2,6 +2,8 @@ import numpy as np
 
 from linearsolve import *
 
+from scipy.interpolate import interp1d
+
 
 def solve_pde_fe_generic(s, k, vol, t, r, spot_intervals, time_intervals, call=True, S_max=None):
 
@@ -270,7 +272,14 @@ def solve_pde_cn_generic(s, k, vol, t, r, spot_intervals, time_intervals, call=T
     s_high = S_min+ i_high*d_x
 
     price = ((s_high - s) * v_low + (s - s_low) * v_high) / (s_high - s_low);
-    return price
+
+    #or
+    S = np.zeros(M+1)
+    for j in range(M+1):
+        S[j] = S_min +j*d_x
+    f =interp1d(S, u[:, 0], kind='linear')
+    return f(s)
+    #return price
 
 
 def solve_pde_fe_better(s, k, vol, t, r, spot_intervals, time_intervals, call=True, S_max=None):

@@ -8,6 +8,7 @@ from forwardeuler import *
 from pde.pde import *
 from pde.sabr_pde import *
 from mc.sabr_mc import *
+from pde.Pde1dGeneric import *
 
 import scipy as sc
 import scipy.linalg as la
@@ -279,6 +280,24 @@ class Test_PdeSolver(unittest.TestCase):
         q = 0.0       
 
         price_1 = solve_pde_be_generic(s,k,vol, t,r, 100, 230, False, S_max=250)         
+
+        price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+
+
+    def test_put_be_european_Generic_A(self):
+
+        s = 138.50
+        k = 110
+        vol = 0.16
+        t = 0.632876712
+        r = 0.01
+        q = 0.0     
+        
+        theta = 0.5
+
+        price_1 = solve_pde_bs_generic(s,k,vol, t,r, 250, 2310, theta, False, S_max=250)         
 
         price_bs = BS_premium(s,k,t,r,vol, False)  
         
