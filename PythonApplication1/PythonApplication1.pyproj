@@ -42,6 +42,12 @@
     <Compile Include="linearsolve.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="mc\sabr_mc.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="mc\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PDEsolver.py" />
     <Compile Include="pdesolverfactory.py">
       <SubType>Code</SubType>
@@ -50,6 +56,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pde\pde.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pde\Pde1dGeneric.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pde\sabr_pde.py">
@@ -66,6 +75,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="mc\" />
     <Folder Include="pde\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
