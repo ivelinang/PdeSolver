@@ -119,13 +119,18 @@ def solve_pde_bs_generic(s, k, vol, t, r, spot_intervals, time_intervals,  theta
             V_x = (V_p - V_m)*inv_2dX;
             V_xx = (V_p + V_m - 2.0*V_0)*inv_dXdX;
 
-            myRhs[xInt] = V_0 + (1.0 - theta) * (a[xInt] * V_xx + b[xInt] * V_x - c[xInt] * V_0);
+            aDt = a[xInt]*dT
+            bDt = b[xInt]*dT
+            cDt = c[xInt]*dT
 
-            bTheta = b[xInt] * inv_2dX * theta;
-            aTheta = a[xInt] * inv_dXdX * theta;
+
+            myRhs[xInt] = V_0 + (1.0 - theta) * (aDt * V_xx + bDt  * V_x - cDt * V_0);
+
+            bTheta = bDt * inv_2dX * theta;
+            aTheta = aDt * inv_dXdX * theta;
 
             myUpper[xInt] = -aTheta - bTheta;
-            myDiag[xInt] = 1.0 + 2.0*aTheta + c[xInt] * theta;
+            myDiag[xInt] = 1.0 + 2.0*aTheta + cDt * theta;
             myLower[xInt] = -aTheta + bTheta;
 
         myLhs_X = Tridag().solve(myLower, myDiag, myUpper, myRhs, numXPoints)
@@ -138,3 +143,172 @@ def solve_pde_bs_generic(s, k, vol, t, r, spot_intervals, time_intervals,  theta
 
         #nextSlice = u[:, tx]
         
+def Pde1DGenericSolver(myGrid, numXPoints, numTPoints, leftBoundary, rightBoundary, InitBoundary, aCoeff, bCoeff, cCoeff, dX, dT, theta):
+    #myGrid = np.zeros((numXPoints, numTPoints)) # 0->M , 0->N
+
+    for i in range(numTPoints):
+        myGrid[0,i] = leftBoundary[i]
+        myGrid[numXPoints-1,i] = rightBoundary[i]
+
+    for j in range(numXPoints):
+        myGrid[j,numTPoints-1] = InitBoundary[j]
+
+    myRhs = np.zeros(numXPoints)
+    myUpper=np.zeros(numXPoints)
+    myDiag=np.zeros(numXPoints)
+    myLower=np.zeros(numXPoints)
+    thisSlice=np.zeros(numXPoints)
+    nextSlice=np.zeros(numXPoints)
+
+    #a=np.zeros(numXPoints)
+    #b=np.zeros(numXPoints)
+    #c=np.zeros(numXPoints)
+
+    #for xInt in range(1, numXPoints):
+
+    #    a[xInt] = aCoeff[xInt]   #0.5*vol*vol*myXPoints[xInt]*myXPoints[xInt]*dT
+    #    b[xInt] = bCoeff[xInt] #r*myXPoints[xInt]*dT
+    #    c[xInt] = cCoeff[xInt]  #r*dT
+
+    
+    #now do the time stepping (from end to start)
+    for tx in range(numTPoints-1, 0, -1 ):        
+
+        inv_dX = 1.0 / dX        
+
+        inv_2dX = 0.5*inv_dX;     
+
+        inv_dXdX = inv_dX * inv_dX;  
+
+        #tau_i = tx*d_tau
+
+        #myGrid[:, tx-1]
+        myRhs[0] = myGrid[0, tx-1]# = left_boundary(S_min,tau_i, k, r )
+        myRhs[numXPoints-1] = myGrid[numXPoints-1, tx-1] #= right_boundary(S_max, tau_i, k, r)
+
+        myUpper[0] = myUpper[numXPoints-1] = 0.0;
+        myDiag[0] = myDiag[numXPoints-1] = 1.0;
+        myLower[0] = myLower[numXPoints-1] = 0.0;
+
+        for xInt in range(1, numXPoints-1):
+
+            V_m = myGrid[xInt-1, tx];
+            V_0 = myGrid[xInt, tx];
+            V_p = myGrid[xInt+1, tx];
+
+            V_x = (V_p - V_m)*inv_2dX;
+            V_xx = (V_p + V_m - 2.0*V_0)*inv_dXdX;
+
+            aDt = aCoeff[xInt, tx]*dT
+            bDt = bCoeff[xInt, tx]*dT
+            cDt = cCoeff[xInt, tx]*dT
+
+            myRhs[xInt] = V_0 + (1.0 - theta) * (aDt * V_xx + bDt * V_x - cDt * V_0);
+
+            bTheta = bDt * inv_2dX * theta;
+            aTheta = aDt * inv_dXdX * theta;
+
+            myUpper[xInt] = -aTheta - bTheta;
+            myDiag[xInt] = 1.0 + 2.0*aTheta + cDt * theta;
+            myLower[xInt] = -aTheta + bTheta;
+
+        myLhs_X = Tridag().solve(myLower, myDiag, myUpper, myRhs, numXPoints)
+
+        for xInt in range(0, numXPoints):
+            myGrid[xInt, tx-1] = myLhs_X[xInt]
+
+
+
+def Pde1DGenericSolver2(myGrid, numXPoints, numTPoints, leftBoundary, rightBoundary, InitBoundary, aCoeff, bCoeff, cCoeff, dX, dT, theta):
+    #myGrid = np.zeros((numXPoints, numTPoints)) # 0->M , 0->N
+
+    for i in range(numTPoints):
+        myGrid[0,i] = leftBoundary[i]
+        myGrid[numXPoints-1,i] = rightBoundary[i]
+
+    for j in range(numXPoints):
+        myGrid[j,0] = InitBoundary[j]
+
+    myRhs = np.zeros(numXPoints)
+    myUpper=np.zeros(numXPoints)
+    myDiag=np.zeros(numXPoints)
+    myLower=np.zeros(numXPoints)
+    thisSlice=np.zeros(numXPoints)
+    nextSlice=np.zeros(numXPoints)
+
+    #a=np.zeros(numXPoints)
+    #b=np.zeros(numXPoints)
+    #c=np.zeros(numXPoints)
+
+    #for xInt in range(1, numXPoints):
+
+    #    a[xInt] = aCoeff[xInt]   #0.5*vol*vol*myXPoints[xInt]*myXPoints[xInt]*dT
+    #    b[xInt] = bCoeff[xInt] #r*myXPoints[xInt]*dT
+    #    c[xInt] = cCoeff[xInt]  #r*dT
+
+    
+    #now do the time stepping (from end to start)
+    for tx in range(0, numTPoints-1 ):        
+
+        inv_dX = 1.0 / dX        
+
+        inv_2dX = 0.5*inv_dX;     
+
+        inv_dXdX = inv_dX * inv_dX;  
+
+        #tau_i = tx*d_tau
+
+        #myGrid[:, tx-1]
+        myRhs[0] = leftBoundary[tx+1]#myGrid[0, tx+1]# = left_boundary(S_min,tau_i, k, r )
+        myRhs[numXPoints-1] = rightBoundary[tx+1]#myGrid[numXPoints-1, tx+1] #= right_boundary(S_max, tau_i, k, r)
+
+        myUpper[0] = myUpper[numXPoints-1] = 0.0;
+        myDiag[0] = myDiag[numXPoints-1] = 1.0;
+        myLower[0] = myLower[numXPoints-1] = 0.0;
+
+        for xInt in range(1, numXPoints-1):
+
+            #V_m_tx = myGrid[xInt-1, tx];
+            #V_0_tx = myGrid[xInt, tx];
+            #V_p_tx = myGrid[xInt+1, tx];
+
+            #V_m_tx1 = myGrid[xInt-1, tx+1];
+            #V_0_tx1 = myGrid[xInt, tx+1];
+            #V_p_tx1 = myGrid[xInt+1, tx+1];
+
+            #aDt = aCoeff[xInt, tx]
+            #bDt = bCoeff[xInt, tx]
+            #cDt = cCoeff[xInt, tx]
+
+            #V_x = (V_p - V_m)*inv_2dX;
+            #V_xx = (V_p + V_m - 2.0*V_0)*inv_dXdX;
+
+            #aDt = aCoeff[xInt, tx]*dT
+            #bDt = bCoeff[xInt, tx]*dT
+            #cDt = cCoeff[xInt, tx]*dT
+
+            if xInt==1 :
+                myRhs[xInt] = (2.0-3.0*dT*aCoeff[xInt, tx])*myGrid[xInt, tx] + dT*aCoeff[xInt+1, tx]*myGrid[xInt+1, tx]
+                myDiag[xInt] = 2.0+3.0*dT*aCoeff[xInt, tx+1]
+                myUpper[xInt] = -dT*aCoeff[xInt+1, tx+1]
+
+            elif xInt==numXPoints-2:
+                myRhs[xInt] = (2.0-3.0*dT*aCoeff[xInt, tx])*myGrid[xInt, tx] + dT*aCoeff[xInt-1, tx]*myGrid[xInt-1, tx]
+                myDiag[xInt] = 2.0+3.0*dT*aCoeff[xInt, tx+1]
+                myLower[xInt] = -dT*aCoeff[xInt-1, tx+1]
+
+            else:
+                myRhs[xInt] = dT*aCoeff[xInt-1, tx]*myGrid[xInt-1, tx]  + (2.0-2.0*dT*aCoeff[xInt, tx])*myGrid[xInt, tx] + dT*aCoeff[xInt+1, tx]*myGrid[xInt+1, tx]
+                myDiag[xInt] = 2.0+2.0*dT*aCoeff[xInt, tx+1]
+                myUpper[xInt] = -dT*aCoeff[xInt+1, tx+1]
+                myLower[xInt] = -dT*aCoeff[xInt-1, tx+1]
+            
+
+        myLhs_X = Tridag().solve(myLower, myDiag, myUpper, myRhs, numXPoints)
+
+        for xInt in range(0, numXPoints):
+            myGrid[xInt, tx+1] = myLhs_X[xInt]
+
+        #and also!
+        myGrid[0, tx+1] = -myGrid[1, tx+1]
+        myGrid[-1, tx+1] = -myGrid[-2, tx+1]

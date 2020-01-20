@@ -9,6 +9,7 @@ from pde.pde import *
 from pde.sabr_pde import *
 from mc.sabr_mc import *
 from pde.Pde1dGeneric import *
+from pde.ArbFreeSabr import *
 
 import scipy as sc
 import scipy.linalg as la
@@ -300,6 +301,104 @@ class Test_PdeSolver(unittest.TestCase):
         price_1 = solve_pde_bs_generic(s,k,vol, t,r, 250, 2310, theta, False, S_max=250)         
 
         price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
+
+
+    def test_put_be_european_Generic_B(self):
+
+        s = 138.50
+        k = 110
+        vol = 0.16
+        t = 0.632876712
+        r = 0.01
+        q = 0.0     
+        
+        theta = 0.5
+        call = True
+
+        tau_final = t
+        spot_intervals = 200
+        time_intervals = 200
+        #d_tau = tau_final/time_intervals
+
+        S_min = 0
+        S_max = 250
+        if S_max is None:
+            log_mean = np.log(s)+(r-vol*vol*0.5)*t
+            log_sd = vol*np.sqrt(t)
+            log_big_value = log_mean + 6*log_sd #6 standard deviations away from mean
+            big_value = np.exp(log_big_value)
+            S_max =big_value #s*np.exp(r*t) + 4*np.sqrt(s*s*np.exp(2*r*t)*(np.exp(vol*vol*t)-1)) # mean + 4 s.d.
+        # IF YOU WANT TO MATCH THE PAPER
+        # https://www.scribd.com/document/317457984/Solution-to-Black-Scholes-P-D-E-via-Finite-Difference-Methods
+        #S_max = 250 # make S-max = 250 to match paper
+        d_x = (S_max - S_min)/spot_intervals
+
+        M = spot_intervals# = 200
+        numXPoints = M
+        N = time_intervals# = 200
+        numTPoints = N
+        #u = np.zeros((M+1, N+1)) # 0->M , 0->N
+
+        UpperXLimit = S_max
+        LowerXLimit = S_min
+
+
+        dT = tau_final/(numTPoints-1)
+        myTPoints = np.zeros(numTPoints)
+        for i in range(numTPoints):
+            myTPoints[i] = i*dT
+
+        dX = (UpperXLimit-LowerXLimit)/(numXPoints-1)
+        myXPoints = np.zeros(numXPoints)
+        for i in range(numXPoints):
+            myXPoints[i] = LowerXLimit + i*dX
+
+        if call:
+            left_boundary =lambda S,T,K,R: 0
+            right_boundary = lambda S,T,K,R: S - K*np.exp(-R*T)
+            side_boundary = lambda S,K : max(S-K, 0)
+        else:
+            left_boundary =lambda S,T,K,R,: K*np.exp(-R*T)
+            right_boundary = lambda S,T,K,R: 0
+            side_boundary = lambda S,K : max(K-S, 0)
+
+        leftBound = np.zeros(numTPoints)
+        rightBound = np.zeros(numTPoints)
+        initBound = np.zeros(numXPoints)
+
+        for i in range(0, numTPoints):
+            leftBound[i] = left_boundary(S_min, myTPoints[i], k, r)
+            rightBound[i] = right_boundary(S_max, myTPoints[i], k, r)
+
+        for i in range(0, numXPoints):
+            initBound[i] = side_boundary(myXPoints[i], k)
+
+        #a=np.zeros(numXPoints)
+        #b=np.zeros(numXPoints)
+        #c=np.zeros(numXPoints)
+
+        a=np.zeros((numXPoints, numTPoints))
+        b=np.zeros((numXPoints, numTPoints))
+        c=np.zeros((numXPoints, numTPoints))
+
+        for xInt in range(0, numXPoints):
+            for tInt in range(0, numTPoints):
+                a[xInt, tInt] = 0.5*vol*vol*myXPoints[xInt]*myXPoints[xInt]*dT
+                b[xInt, tInt] = r*myXPoints[xInt]*dT
+                c[xInt, tInt] = r*dT
+      
+
+        myGrid = np.zeros((numXPoints, numTPoints)) # 0->M , 0->N
+
+        #price_1 = solve_pde_bs_generic(s,k,vol, t,r, 250, 2310, theta, False, S_max=250)         
+        Pde1DGenericSolver(myGrid, numXPoints, numTPoints, leftBound, rightBound, initBound, a, b, c, dX, dT, theta)
+
+        f =interp1d(myXPoints, myGrid[:, 0], kind='linear')
+        price_1 = f(s)
+
+        price_bs = BS_premium(s,k,t,r,vol, call)  
         
         self.assertAlmostEquals(price_1, price_bs, delta=0.000001*price_bs)
 
@@ -634,6 +733,25 @@ class Test_SabrMC(unittest.TestCase):
         D = np.dot(X,C)
 
         self.assertTrue(np.prod(Z==D))
+
+class Test_FreeArbSabr(unittest.TestCase):
+
+    def test_Arb_Free_Sabr_A(self):
+        spot = 1.00
+        rd = 0.0
+        rf = 0.0
+        alpha = 0.35
+        beta = 0.25
+        nu = 1.0
+        rho = -0.10
+        tau = 1.0
+        forward = spot
+        strike = 1.00
+        DF = 1.0
+
+        price = priceOptionArbFreeSabr(forward, strike, tau, alpha, beta, nu, rho, 500, 100)
+
+        self.assertEqual(price, 0.15)
        
 
 

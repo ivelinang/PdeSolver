@@ -52,6 +52,9 @@
     <Compile Include="pdesolverfactory.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="pde\ArbFreeSabr.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="pde\payoff.py">
       <SubType>Code</SubType>
     </Compile>
