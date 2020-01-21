@@ -259,8 +259,8 @@ def Pde1DGenericSolver2(myGrid, numXPoints, numTPoints, leftBoundary, rightBound
         #tau_i = tx*d_tau
 
         #myGrid[:, tx-1]
-        myRhs[0] = leftBoundary[tx+1]#myGrid[0, tx+1]# = left_boundary(S_min,tau_i, k, r )
-        myRhs[numXPoints-1] = rightBoundary[tx+1]#myGrid[numXPoints-1, tx+1] #= right_boundary(S_max, tau_i, k, r)
+        myRhs[0] = myGrid[0, tx]# = left_boundary(S_min,tau_i, k, r ) #leftBoundary[tx+1]#
+        myRhs[numXPoints-1] = myGrid[numXPoints-1, tx] #= right_boundary(S_max, tau_i, k, r) #rightBoundary[tx+1]#
 
         myUpper[0] = myUpper[numXPoints-1] = 0.0;
         myDiag[0] = myDiag[numXPoints-1] = 1.0;
@@ -288,20 +288,20 @@ def Pde1DGenericSolver2(myGrid, numXPoints, numTPoints, leftBoundary, rightBound
             #cDt = cCoeff[xInt, tx]*dT
 
             if xInt==1 :
-                myRhs[xInt] = (2.0-3.0*dT*aCoeff[xInt, tx])*myGrid[xInt, tx] + dT*aCoeff[xInt+1, tx]*myGrid[xInt+1, tx]
-                myDiag[xInt] = 2.0+3.0*dT*aCoeff[xInt, tx+1]
-                myUpper[xInt] = -dT*aCoeff[xInt+1, tx+1]
+                myRhs[xInt] = (2.0-3.0*dT*aCoeff[xInt, tx]*inv_dXdX)*myGrid[xInt, tx] + dT*aCoeff[xInt+1, tx]*myGrid[xInt+1, tx]*inv_dXdX
+                myDiag[xInt] = 2.0+3.0*dT*aCoeff[xInt, tx+1]*inv_dXdX
+                myUpper[xInt] = -dT*aCoeff[xInt+1, tx+1]*inv_dXdX
 
             elif xInt==numXPoints-2:
-                myRhs[xInt] = (2.0-3.0*dT*aCoeff[xInt, tx])*myGrid[xInt, tx] + dT*aCoeff[xInt-1, tx]*myGrid[xInt-1, tx]
-                myDiag[xInt] = 2.0+3.0*dT*aCoeff[xInt, tx+1]
-                myLower[xInt] = -dT*aCoeff[xInt-1, tx+1]
+                myRhs[xInt] = (2.0-3.0*dT*aCoeff[xInt, tx]*inv_dXdX)*myGrid[xInt, tx] + dT*aCoeff[xInt-1, tx]*myGrid[xInt-1, tx]*inv_dXdX
+                myDiag[xInt] = 2.0+3.0*dT*aCoeff[xInt, tx+1]*inv_dXdX
+                myLower[xInt] = -dT*aCoeff[xInt-1, tx+1]*inv_dXdX
 
             else:
-                myRhs[xInt] = dT*aCoeff[xInt-1, tx]*myGrid[xInt-1, tx]  + (2.0-2.0*dT*aCoeff[xInt, tx])*myGrid[xInt, tx] + dT*aCoeff[xInt+1, tx]*myGrid[xInt+1, tx]
-                myDiag[xInt] = 2.0+2.0*dT*aCoeff[xInt, tx+1]
-                myUpper[xInt] = -dT*aCoeff[xInt+1, tx+1]
-                myLower[xInt] = -dT*aCoeff[xInt-1, tx+1]
+                myRhs[xInt] = dT*aCoeff[xInt-1, tx]*myGrid[xInt-1, tx]*inv_dXdX  + (2.0-2.0*dT*aCoeff[xInt, tx]*inv_dXdX)*myGrid[xInt, tx] + dT*aCoeff[xInt+1, tx]*myGrid[xInt+1, tx]*inv_dXdX
+                myDiag[xInt] = 2.0+2.0*dT*aCoeff[xInt, tx+1]*inv_dXdX
+                myUpper[xInt] = -dT*aCoeff[xInt+1, tx+1]*inv_dXdX
+                myLower[xInt] = -dT*aCoeff[xInt-1, tx+1]*inv_dXdX
             
 
         myLhs_X = Tridag().solve(myLower, myDiag, myUpper, myRhs, numXPoints)
@@ -310,5 +310,5 @@ def Pde1DGenericSolver2(myGrid, numXPoints, numTPoints, leftBoundary, rightBound
             myGrid[xInt, tx+1] = myLhs_X[xInt]
 
         #and also!
-        myGrid[0, tx+1] = -myGrid[1, tx+1]
-        myGrid[-1, tx+1] = -myGrid[-2, tx+1]
+        myGrid[0, tx+1] = -myGrid[1, tx+1]*aCoeff[1, tx+1]/aCoeff[0, tx+1]
+        myGrid[-1, tx+1] = -myGrid[-2, tx+1]*aCoeff[-2, tx+1]/aCoeff[-1, tx+1]

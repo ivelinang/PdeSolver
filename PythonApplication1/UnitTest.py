@@ -749,9 +749,27 @@ class Test_FreeArbSabr(unittest.TestCase):
         strike = 1.00
         DF = 1.0
 
-        price = priceOptionArbFreeSabr(forward, strike, tau, alpha, beta, nu, rho, 500, 100)
+        price = priceOptionArbFreeSabr(forward, strike, tau, alpha, beta, nu, rho, 500, 200)
 
         self.assertEqual(price, 0.15)
+
+    def test_Arb_Free_Sabr_B(self):
+        spot = 1.00
+        rd = 0.0
+        rf = 0.0
+        alpha = 0.35
+        beta = 0.25
+        nu = 1.0
+        rho = -0.10
+        tau = 1.0
+        forward = spot
+        strike = 1.00
+        DF = 1.0
+        N = 500
+        timesteps = 5
+        nd =4
+
+        makeTransformedDensity(alpha, beta, nu, rho, forward, tau, N, timesteps, nd)
        
 
 
