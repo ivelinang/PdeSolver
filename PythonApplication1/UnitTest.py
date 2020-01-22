@@ -769,7 +769,8 @@ class Test_FreeArbSabr(unittest.TestCase):
         timesteps = 5
         nd =4
 
-        makeTransformedDensity(alpha, beta, nu, rho, forward, tau, N, timesteps, nd)
+        P, PL, PR, zm, zmin, zmax, h =makeTransformedDensity(alpha, beta, nu, rho, forward, tau, N, timesteps, nd)
+        aaaaaar=2
        
 
 

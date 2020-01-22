@@ -38,24 +38,31 @@ def G(f, beta, Fm, j0):
 def solveStep(Fm, Cm, Em, dt, h, P, PL, PR):
     frac = dt/(2.0*h)
     M = len(P)
+
     B = np.zeros(M)
-    B[1:M-2] = 1.0 + frac*(Cm[1:M-2] * Em[1:M-2] * (1.0/(Fm[2:M-1]-Fm[1:M-2]) + 1.0/(Fm[1:M-2] - Fm[0:M-1])))
-    C = np.zeros(M) 
-    C[1:M-2] = -frac*Cm[2:M-1] * Em[2:M-1] / (Fm[2:M-1] - Fm[1:M-2])
-    A = np.zeros(M) 
-    A[:M-2]= -frac*Cm[1:M-3]*Em[0:M-3]/(Fm[1:M-2] - Fm[:M-3])
+    B[1:M-1] = 1.0 + frac*(Cm[1:M-1] * Em[1:M-1] * (1.0/(Fm[2:M]-Fm[1:M-1]) + 1.0/(Fm[1:M-1] - Fm[0:M-2])))
+
+    C = np.zeros(M-1) 
+    C[1:M-1] = -frac*Cm[2:M] * Em[2:M] / (Fm[2:M] - Fm[1:M-1])
+
+    A = np.zeros(M-1) 
+    A[0:M-2]= -frac*Cm[0:M-2]*Em[0:M-2]/(Fm[1:M-1] - Fm[:M-2])
+
     B[0] = Cm[0] / (Fm[1] - Fm[0])*Em[0]
     C[0] = Cm[1] / (Fm[1]-Fm[0])*Em[1]
+
     B[M-1] = Cm[M-1]/(Fm[M-1] - Fm[M-2])*Em[M-1]
     A[M-2] = Cm[M-2] / (Fm[M-1] - Fm[M-2])*Em[M-2]
-    # lower + diagonal + upper
-    tri = np.diag(B) + np.diag(A) + np.diag(C)
+    # diagonal + lower + upper
+    tri = np.diag(B) + np.diag(A, -1) + np.diag(C, 1)
     P[0] = 0
     P[M-1]=0
     # solve the matrix
     P = np.linalg.solve(tri, P)
-    PL = PL + dt*Cm[1] / (Fm[1] - Fm[1])*Em[1]*P[1]
-    PR = PR + dt*Cm[M-2]/(Fm[M-1] - Fm[M-1])*Em[M-2]*P[M-1]
+    PL = PL + dt*Cm[1] / (Fm[1] - Fm[0])*Em[1]*P[1]
+    PR = PR + dt*Cm[M-2]/(Fm[M-1] - Fm[M-2])*Em[M-2]*P[M-2]
+
+    return P, PL, PR
 
 
 
@@ -101,10 +108,25 @@ def makeTransformedDensity(alpha, beta, nu, rho, f, T, N, timesteps, nd):
     Emdt2[0] = Emdt2[1]
     Emdt2[J+1] = Emdt2[J]
 
-    pL = 0.0
-    pR = 0.0
+    PL = 0.0
+    PR = 0.0
     P = np.zeros(J+2)
     P[j0] = 1.0/h
+
+    for t in range(1, timesteps+1):
+        Em = Em * Emdt1
+        P1, PL1, PR1 = solveStep(Fm, Cm, Em, dt1, h, P, PL, PR)
+
+        Em = Em * Emdt1
+        P2, PL2, PR2 = solveStep(Fm, Cm, Em, dt1, h, P1, PL1, PR1)
+
+        P = (np.sqrt(2.0) + 1.0)*P2 - np.sqrt(2)*P1
+        PL = (np.sqrt(2.0) + 1.0)*PL2 - np.sqrt(2)*PL1
+        PR = (np.sqrt(2.0) + 1.0)*PR2 - np.sqrt(2)*PR1
+        Em = Em*Emdt2
+
+
+    return P, PL, PR, zm, zmin, zmax, h
 
 
 
