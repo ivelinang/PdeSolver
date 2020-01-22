@@ -35,6 +35,32 @@ def G(f, beta, Fm, j0):
     G[j0] = beta / (f**(1.0-beta)) # to account for Fm-f = 0
     return G
 
+def solveStep(Fm, Cm, Em, dt, h, P, PL, PR):
+    frac = dt/(2.0*h)
+    M = len(P)
+    B = np.zeros(M)
+    B[1:M-2] = 1.0 + frac*(Cm[1:M-2] * Em[1:M-2] * (1.0/(Fm[2:M-1]-Fm[1:M-2]) + 1.0/(Fm[1:M-2] - Fm[0:M-1])))
+    C = np.zeros(M) 
+    C[1:M-2] = -frac*Cm[2:M-1] * Em[2:M-1] / (Fm[2:M-1] - Fm[1:M-2])
+    A = np.zeros(M) 
+    A[:M-2]= -frac*Cm[1:M-3]*Em[0:M-3]/(Fm[1:M-2] - Fm[:M-3])
+    B[0] = Cm[0] / (Fm[1] - Fm[0])*Em[0]
+    C[0] = Cm[1] / (Fm[1]-Fm[0])*Em[1]
+    B[M-1] = Cm[M-1]/(Fm[M-1] - Fm[M-2])*Em[M-1]
+    A[M-2] = Cm[M-2] / (Fm[M-1] - Fm[M-2])*Em[M-2]
+    # lower + diagonal + upper
+    tri = np.diag(B) + np.diag(A) + np.diag(C)
+    P[0] = 0
+    P[M-1]=0
+    # solve the matrix
+    P = np.linalg.solve(tri, P)
+    PL = PL + dt*Cm[1] / (Fm[1] - Fm[1])*Em[1]*P[1]
+    PR = PR + dt*Cm[M-2]/(Fm[M-1] - Fm[M-1])*Em[M-2]*P[M-1]
+
+
+
+
+
 def makeTransformedDensity(alpha, beta, nu, rho, f, T, N, timesteps, nd):
     zmin, zmax = computeBoundaries(alpha, beta, nu, rho, f, T, nd)
     J = N-2
@@ -74,6 +100,11 @@ def makeTransformedDensity(alpha, beta, nu, rho, f, T, N, timesteps, nd):
     Emdt2 = np.exp(rho*nu*alpha*Gamma*dt2)
     Emdt2[0] = Emdt2[1]
     Emdt2[J+1] = Emdt2[J]
+
+    pL = 0.0
+    pR = 0.0
+    P = np.zeros(J+2)
+    P[j0] = 1.0/h
 
 
 
