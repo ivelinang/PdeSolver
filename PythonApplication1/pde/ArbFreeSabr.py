@@ -135,11 +135,22 @@ def YofF(F,  f,  beta):
 	oneMinusBeta = 1.0 - beta;
 	return (F**oneMinusBeta - f**oneMinusBeta) / oneMinusBeta;
 
+def YofF_2(F,  f,  beta, alpha):
+	oneMinusBeta = 1.0 - beta;
+	return (F**oneMinusBeta - f**oneMinusBeta) / oneMinusBeta/alpha;
+
 
 def DSqrOfF( F,  f,  beta,  alpha,  nu,  rho):
 	yF = YofF(F, f, beta);
 	F2beta = F**(2.0*beta);
 	temp = alpha * alpha + 2.0*alpha*rho*nu*yF + nu * nu + yF * yF;
+	return temp * F2beta;
+
+
+def DSqrOfF_2( F,  f,  beta,  alpha,  nu,  rho):
+	yF = YofF_2(F, f, beta, alpha);
+	F2beta = F**(2.0*beta);
+	temp = 1.0 * 1.0 + 2.0*rho*nu*yF + nu * nu + yF * yF;
 	return temp * F2beta;
 
 
@@ -155,6 +166,12 @@ def EofF(F,  f,  beta,  alpha,  nu,  rho,  Texp):
 	return np.exp(temp);
 
 
+#def EofF_2(F,  f,  beta,  alpha,  nu,  rho,  Texp):
+#	G = GofF(F, f, beta);
+#	temp = nu*alpha*G*Texp;
+#	return np.exp(temp);
+
+
 
 def MofF(F, f, beta, alpha,  nu,  rho,  Texp):
 	D2 = DSqrOfF(F, f, beta, alpha, nu, rho);
@@ -162,10 +179,16 @@ def MofF(F, f, beta, alpha,  nu,  rho,  Texp):
 	return 0.5*D2*E;    
 
 
+def MofF_2(F, f, beta, alpha,  nu,  rho,  Texp):
+	D2 = DSqrOfF_2(F, f, beta, alpha, nu, rho);
+	E = EofF(F, f, beta, alpha, nu, rho, Texp);
+	return 0.5*alpha*alpha*D2*E;    
+
+
 def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, time_intervals):
 
     f_max = f + 10.0*alpha*np.sqrt(T)
-    f_min = max(f - 5.0*alpha*np.sqrt(T),0.01)
+    f_min = max(f - 5.0*alpha*np.sqrt(T),0.10)
    
     numXPoints = spot_intervals +2
     numTPoints = time_intervals  +1  
@@ -184,12 +207,12 @@ def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, t
     for i in range(numXPoints):
         myXPoints[i] = LowerXLimit + (i-0.5)*dX #-0.5
 
-    #adjust dX
-    index = np.argmax(myXPoints>=f)
-    dX = (f-f_min)/(index-0.5)
-    #redo calcs
-    for i in range(numXPoints):
-        myXPoints[i] = LowerXLimit + (i-0.5)*dX #-0.5
+    ##adjust dX
+    #index = np.argmax(myXPoints>=f)
+    #dX = (f-f_min)/(index-0.5)
+    ##redo calcs
+    #for i in range(numXPoints):
+    #    myXPoints[i] = LowerXLimit + (i-0.5)*dX #-0.5
 
 
     leftBound = np.zeros(numTPoints)
