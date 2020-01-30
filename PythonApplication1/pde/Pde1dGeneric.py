@@ -310,8 +310,8 @@ def Pde1DGenericSolver2(myGrid, numXPoints, numTPoints, leftBoundary, rightBound
             myGrid[xInt, tx+1] = myLhs_X[xInt]
 
         #and also!
-        myGrid[0, tx+1] = -myGrid[1, tx+1]*aCoeff[1, tx+1]/aCoeff[0, tx+1]
-        myGrid[-1, tx+1] = -myGrid[-2, tx+1]*aCoeff[-2, tx+1]/aCoeff[-1, tx+1]
+        #myGrid[0, tx+1] = -myGrid[1, tx+1]*aCoeff[1, tx+1]/aCoeff[0, tx+1]
+        #myGrid[-1, tx+1] = -myGrid[-2, tx+1]*aCoeff[-2, tx+1]/aCoeff[-1, tx+1]
 
 
 
@@ -432,6 +432,102 @@ def Pde1DGenericSolver3(myGrid, numXPoints, numTPoints, leftBoundary, rightBound
             #myUpper[xInt] = upper
             #myDiag[xInt] = diag
             #myLower[xInt] = lower
+
+        myLhs_X = Tridag().solve(myLower, myDiag, myUpper, myRhs, numXPoints)
+
+        for xInt in range(0, numXPoints):
+            myGrid[xInt, tx] = myLhs_X[xInt]
+
+
+def Pde1DGenericSolver4(myGrid, numXPoints, numTPoints, leftBoundary, rightBoundary, InitBoundary, aCoeff, bCoeff, cCoeff, dX, dT, theta):
+    #myGrid = np.zeros((numXPoints, numTPoints)) # 0->M , 0->N
+
+    for i in range(numTPoints):
+        myGrid[0,i] = leftBoundary[i]
+        myGrid[numXPoints-1,i] = rightBoundary[i]
+
+    for j in range(numXPoints):
+        myGrid[j,0] = InitBoundary[j]
+
+    myRhs = np.zeros(numXPoints)
+    myUpper=np.zeros(numXPoints)
+    myDiag=np.zeros(numXPoints)
+    myLower=np.zeros(numXPoints)
+    thisSlice=np.zeros(numXPoints)
+    nextSlice=np.zeros(numXPoints)
+
+    #a=np.zeros(numXPoints)
+    #b=np.zeros(numXPoints)
+    #c=np.zeros(numXPoints)
+
+    #for xInt in range(1, numXPoints):
+
+    #    a[xInt] = aCoeff[xInt]   #0.5*vol*vol*myXPoints[xInt]*myXPoints[xInt]*dT
+    #    b[xInt] = bCoeff[xInt] #r*myXPoints[xInt]*dT
+    #    c[xInt] = cCoeff[xInt]  #r*dT
+
+    
+    #now do the time stepping (from end to start)
+    for tx in range(1, numTPoints ):        
+
+        inv_dX = 1.0 / dX        
+
+        inv_2dX = 0.5*inv_dX;     
+
+        inv_dXdX = inv_dX * inv_dX;  
+
+        #tau_i = tx*d_tau
+
+        #myGrid[:, tx-1]
+        myRhs[0] = myGrid[0, tx]# = left_boundary(S_min,tau_i, k, r ) #leftBoundary[tx+1]#
+        myRhs[numXPoints-1] = myGrid[numXPoints-1, tx] #= right_boundary(S_max, tau_i, k, r) #rightBoundary[tx+1]#
+
+        myUpper[0] = myUpper[numXPoints-1] = 0.0;
+        myDiag[0] = myDiag[numXPoints-1] = 1.0;
+        myLower[0] = myLower[numXPoints-1] = 0.0;
+
+        #for boundary conditions
+        myDiag[0] = aCoeff[0, tx]
+        myUpper[0] = aCoeff[1, tx]
+
+        myDiag[numXPoints-1] = aCoeff[numXPoints-1, tx]
+        myLower[numXPoints-1] = aCoeff[numXPoints-2, tx]
+
+        for xInt in range(1, numXPoints-1):
+
+            #V_m_tx = myGrid[xInt-1, tx];
+            #V_0_tx = myGrid[xInt, tx];
+            #V_p_tx = myGrid[xInt+1, tx];
+
+            #V_m_tx1 = myGrid[xInt-1, tx+1];
+            #V_0_tx1 = myGrid[xInt, tx+1];
+            #V_p_tx1 = myGrid[xInt+1, tx+1];
+
+            #aDt = aCoeff[xInt, tx]
+            #bDt = bCoeff[xInt, tx]
+            #cDt = cCoeff[xInt, tx]
+
+            #V_x = (V_p - V_m)*inv_2dX;
+            #V_xx = (V_p + V_m - 2.0*V_0)*inv_dXdX;
+
+            #aDt = aCoeff[xInt, tx]*dT
+            #bDt = bCoeff[xInt, tx]*dT
+            #cDt = cCoeff[xInt, tx]*dT
+
+            V_m = myGrid[xInt-1, tx-1];
+            V_0 = myGrid[xInt, tx-1];
+            V_p = myGrid[xInt+1, tx-1];
+            
+            V_x = 0#(V_p*thisBcoeff[xInt + 1] - V_m * thisBcoeff[xInt - 1])*inv_2dX;
+            V_xx = (V_p*aCoeff[xInt+1, tx-1] + V_m * aCoeff[xInt-1, tx-1] - 2.0*V_0*aCoeff[xInt, tx-1])*inv_dXdX;
+            lower = -theta * dT*(aCoeff[xInt-1, tx] * inv_dXdX);
+            upper = -theta * dT*(aCoeff[xInt+1, tx] * inv_dXdX);
+            diag = 1.0 - theta * dT*(-2.0* aCoeff[xInt, tx] * inv_dXdX );
+            myDiag[xInt] = diag;
+            myLower[xInt] = lower;
+            myUpper[xInt] = upper;
+            myRhs[xInt] = V_0 + (1.0 - theta) *dT* (V_x + V_xx );
+            
 
         myLhs_X = Tridag().solve(myLower, myDiag, myUpper, myRhs, numXPoints)
 

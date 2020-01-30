@@ -1117,6 +1117,32 @@ class Test_SabrMC(unittest.TestCase):
         self.assertAlmostEquals(price, price_true, delta=0.01*price) 
 
 
+    
+    def test_call_sabrMC_F(self):
+
+        f = 1.00
+        k = 1.00
+        vol = 1.0
+        nu = 1.0
+        beta = 0.30
+        rho = 0.90
+        t = 10.0
+        gamma = 1.0
+        nSims =1000
+        deltaT = 20.0/252.0
+
+        sabr = SabrMonteCarlo(f, vol, beta, nu, rho, gamma, t)
+        price = sabr.priceOption_mixed(deltaT, nSims, k, 1.0)
+        #price is nan
+        #cant do log term with Monte Carlo and Beta=0
+
+        price_true = 0.59381207591799812
+
+        #price_bs = BS_premium(s,k,t,r,vol, False)  
+        
+        self.assertAlmostEquals(price, price_true, delta=0.01*price) 
+
+
     def test_choleshy_A(self):
 
         nSteps = 100
@@ -1139,6 +1165,24 @@ class Test_SabrMC(unittest.TestCase):
 
 class Test_FreeArbSabr(unittest.TestCase):
 
+    def test_Arb_Free_Sabr_M_Func(self):
+        spot = 1.00
+        rd = 0.0
+        rf = 0.0
+        alpha = 0.35
+        beta = 0.25
+        nu = 1.0
+        rho = -0.10
+        tau = 1.0
+        forward = spot
+        strike = 1.00
+        DF = 1.0
+
+        m1 = MofF(1.1, spot, beta, alpha, nu, rho, 0.5)
+        m2 = MofF_2(1.1, spot, beta, alpha, nu, rho, 0.5)
+
+        self.assertAlmostEqual(m1, m2, 5)
+
     def test_Arb_Free_Sabr_A(self):
         spot = 1.00
         rd = 0.0
@@ -1152,7 +1196,7 @@ class Test_FreeArbSabr(unittest.TestCase):
         strike = 1.00
         DF = 1.0
 
-        price = priceOptionArbFreeSabr(forward, strike, tau, alpha, beta, nu, rho, 500, 40)
+        price = priceOptionArbFreeSabr(forward, strike, tau, alpha, beta, nu, rho, 500, 100)
 
         self.assertEqual(price, 0.15)
 

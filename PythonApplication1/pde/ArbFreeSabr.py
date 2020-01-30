@@ -64,6 +64,35 @@ def solveStep(Fm, Cm, Em, dt, h, P, PL, PR):
 
     return P, PL, PR
 
+def solveStep2(Fm, Cm, Em, dt, h, P, PL, PR):
+    frac = dt/(2.0*h)
+    M = len(P)
+
+    B = np.zeros(M)
+    B[1:M-1] = 1.0 + frac*(Cm[1:M-1] * Em[1:M-1] * (1.0/(Fm[1:M-1]-Fm[0:M-2]) + 1.0/(Fm[1:M-1]-Fm[0:M-2])))
+
+    C = np.zeros(M-1) 
+    C[1:M-1] = -frac*Cm[2:M] * Em[2:M] / (Fm[2:M] - Fm[1:M-1])
+
+    A = np.zeros(M-1) 
+    A[0:M-2]= -frac*Cm[0:M-2]*Em[0:M-2]/(Fm[0:M-2] - Fm[1:M-1])
+
+    B[0] = Cm[0] / (Fm[1] - Fm[0])*Em[0]
+    C[0] = Cm[1] / (Fm[1]-Fm[0])*Em[1]
+
+    B[M-1] = Cm[M-1]/(Fm[M-1] - Fm[M-2])*Em[M-1]
+    A[M-2] = Cm[M-2] / (Fm[M-1] - Fm[M-2])*Em[M-2]
+    # diagonal + lower + upper
+    tri = np.diag(B) + np.diag(A, -1) + np.diag(C, 1)
+    P[0] = 0
+    P[M-1]=0
+    # solve the matrix
+    P = np.linalg.solve(tri, P)
+    PL = PL + dt*Cm[1] / (Fm[1] - Fm[0])*Em[1]*P[1]
+    PR = PR + dt*Cm[M-2]/(Fm[M-1] - Fm[M-2])*Em[M-2]*P[M-2]
+
+    return P, PL, PR
+
 
 
 
@@ -95,7 +124,7 @@ def makeTransformedDensity(alpha, beta, nu, rho, f, T, N, timesteps, nd):
     Cm[0] = Cm[1]
     Cm[J+1] = Cm[J]
     Gamma = G(f, beta, Fm, j0)
-    dt = T/timesteps
+    dt = T/(timesteps-1)
     b = 1.0 - np.sqrt(2.0)/2.0
     dt1 = dt*b
     dt2 = dt*(1.0-2.0*b)
@@ -113,7 +142,7 @@ def makeTransformedDensity(alpha, beta, nu, rho, f, T, N, timesteps, nd):
     P = np.zeros(J+2)
     P[j0] = 1.0/h
 
-    for t in range(1, timesteps+1):
+    for t in range(1, timesteps):
         Em = Em * Emdt1
         P1, PL1, PR1 = solveStep(Fm, Cm, Em, dt1, h, P, PL, PR)
 
@@ -137,20 +166,20 @@ def YofF(F,  f,  beta):
 
 def YofF_2(F,  f,  beta, alpha):
 	oneMinusBeta = 1.0 - beta;
-	return (F**oneMinusBeta - f**oneMinusBeta) / oneMinusBeta/alpha;
+	return (F**oneMinusBeta - f**oneMinusBeta) / (oneMinusBeta*alpha);
 
 
 def DSqrOfF( F,  f,  beta,  alpha,  nu,  rho):
 	yF = YofF(F, f, beta);
 	F2beta = F**(2.0*beta);
-	temp = alpha * alpha + 2.0*alpha*rho*nu*yF + nu * nu + yF * yF;
+	temp = alpha * alpha + 2.0*alpha*rho*nu*yF + nu * nu * yF * yF;
 	return temp * F2beta;
 
 
 def DSqrOfF_2( F,  f,  beta,  alpha,  nu,  rho):
 	yF = YofF_2(F, f, beta, alpha);
 	F2beta = F**(2.0*beta);
-	temp = 1.0 * 1.0 + 2.0*rho*nu*yF + nu * nu + yF * yF;
+	temp = 1.0 * 1.0 + 2.0*rho*nu*yF + nu * nu * yF * yF;
 	return temp * F2beta;
 
 
@@ -188,24 +217,29 @@ def MofF_2(F, f, beta, alpha,  nu,  rho,  Texp):
 def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, time_intervals):
 
     f_max = f + 10.0*alpha*np.sqrt(T)
-    f_min = max(f - 5.0*alpha*np.sqrt(T),0.10)
+    f_min = max(f - 5.0*alpha*np.sqrt(T),0.01)
    
-    numXPoints = spot_intervals +2
-    numTPoints = time_intervals  +1  
+    numXPoints = spot_intervals #+2
+    numTPoints = time_intervals  #+1  
 
     UpperXLimit = f_max
     LowerXLimit = f_min
 
-    dT = T/(time_intervals)
+    dT = T/(numTPoints-1)
     myTPoints = np.zeros(numTPoints) # 0, 1 .... N
     for i in range(numTPoints):
         myTPoints[i] = i*dT
 
-    dX = (f-f_min)
-    dX = (UpperXLimit-LowerXLimit)/(spot_intervals)
+    #dX = (f-f_min)
+    dX = (UpperXLimit-LowerXLimit)/(numXPoints-2)
     myXPoints = np.zeros(numXPoints) # 0, 1, 2....J+1
     for i in range(numXPoints):
         myXPoints[i] = LowerXLimit + (i-0.5)*dX #-0.5
+
+    myXPoints[0] =LowerXLimit
+
+    #myXPoints[0] = 2.0*LowerXLimit - myXPoints[1]
+    #myXPoints[-1] = 2.0*UpperXLimit - myXPoints[-2]
 
     ##adjust dX
     #index = np.argmax(myXPoints>=f)
@@ -239,16 +273,24 @@ def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, t
 
             F_j = myXPoints[xInt]
             t_j = myTPoints[tInt]
-            a[xInt, tInt] = MofF(F_j, f, beta, alpha, nu, rho, myTPoints[tInt]) 
+            a[xInt, tInt] = MofF_2(F_j, f, beta, alpha, nu, rho, myTPoints[tInt]) 
             b[xInt, tInt] = 0#r*myXPoints[xInt]*dT
             c[xInt, tInt] = 0#r*dT
-      
+
+    for tInt in range(0, numTPoints):
+        a[0, tInt] = 2.0*a[0, tInt] - a[1, tInt] 
+        a[-1, tInt] = 2.0*a[-1, tInt] - a[-2, tInt] 
+    
+    #another one
+    #for tInt in range(0, numTPoints):
+    #    a[0, tInt] = a[1, tInt]
+    #    a[-1, tInt] = a[-2, tInt]
 
     myGrid = np.zeros((numXPoints, numTPoints)) # 0->M , 0->N
 
     theta=0.5
 
-    Pde1DGenericSolver2(myGrid, numXPoints, numTPoints, leftBound, rightBound, initBound, a, b, c, dX, dT, theta)
+    Pde1DGenericSolver4(myGrid, numXPoints, numTPoints, leftBound, rightBound, initBound, a, b, c, dX, dT, theta)
 
     for tInt in range(numTPoints):
         #myGrid[0, tInt] = -myGrid[1, tInt]
@@ -283,6 +325,7 @@ def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, t
     vCall4 = [myGrid[x, -1]*dX* max(myXPoints[x]-strike,0) for x in range(1,numXPoints-1)]
 
     vCall= vCall1+ sum(vCall2) + vCall3
+    vCall = sum(vCall4)
     return vCall
 
 
