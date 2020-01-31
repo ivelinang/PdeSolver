@@ -1218,6 +1218,18 @@ class Test_FreeArbSabr(unittest.TestCase):
 
         P, PL, PR, zm, zmin, zmax, h =makeTransformedDensity(alpha, beta, nu, rho, forward, tau, N, timesteps, nd)
         aaaaaar=2
+
+
+    def test_Arb_Free_Sabr_D(self):
+
+        s = 1.0
+        strike = 1.0
+        vol = 1.98134
+        t=10
+        p=BS_premium(s, strike, t, 0, vol)
+        self.assertEqual(p, 0.79845)
+
+
        
 
 
