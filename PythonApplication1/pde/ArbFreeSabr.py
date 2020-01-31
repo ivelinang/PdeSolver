@@ -277,9 +277,9 @@ def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, t
             b[xInt, tInt] = 0#r*myXPoints[xInt]*dT
             c[xInt, tInt] = 0#r*dT
 
-    for tInt in range(0, numTPoints):
-        a[0, tInt] = 2.0*a[0, tInt] - a[1, tInt] 
-        a[-1, tInt] = 2.0*a[-1, tInt] - a[-2, tInt] 
+    #for tInt in range(0, numTPoints):
+        #a[0, tInt] = 2.0*a[0, tInt] - a[1, tInt] 
+        #a[-1, tInt] = 2.0*a[-1, tInt] - a[-2, tInt] 
     
     #another one
     #for tInt in range(0, numTPoints):
@@ -325,7 +325,7 @@ def priceOptionArbFreeSabr(f, strike, T, alpha, beta, nu, rho, spot_intervals, t
     vCall4 = [myGrid[x, -1]*dX* max(myXPoints[x]-strike,0) for x in range(1,numXPoints-1)]
 
     vCall= vCall1+ sum(vCall2) + vCall3
-    vCall = sum(vCall4)
+    #vCall = sum(vCall4)
     return vCall
 
 
